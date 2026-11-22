@@ -1,0 +1,758 @@
+<!-- ... existing code ... -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATENAS — Logística & Diseño Gráfico Profesional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
+        :root {
+            --brand-primary: #0F172A;
+            --brand-accent: #2563EB;
+            --brand-surface: #F8FAFC;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--brand-surface);
+            color: #1e293b;
+            scroll-behavior: smooth;
+        }
+
+        .font-display { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* Estilos del modo editor vs modo cliente */
+        body.is-editing [contenteditable="true"] {
+            outline: none;
+            border-radius: 4px;
+            transition: background-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        body.is-editing [contenteditable="true"]:hover {
+            background-color: rgba(37, 99, 235, 0.08);
+            box-shadow: 0 0 0 1px dashed rgba(37, 99, 235, 0.5);
+        }
+
+        body.is-editing [contenteditable="true"]:focus {
+            background-color: rgba(37, 99, 235, 0.12);
+            box-shadow: 0 0 0 2px #2563eb;
+        }
+
+        body:not(.is-editing) .edit-only {
+            display: none !important;
+        }
+
+        .bg-brand-primary { background-color: var(--brand-primary); }
+        .text-brand-primary { color: var(--brand-primary); }
+        .bg-brand-accent { background-color: var(--brand-accent); }
+        .text-brand-accent { color: var(--brand-accent); }
+        .border-brand-accent { border-color: var(--brand-accent); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- =====================================================================
+         BARRA DE GESTIÓN Y PUBLICACIÓN (Oculta en la versión pública final)
+    ====================================================================== -->
+    <div id="admin-toolbar" class="bg-slate-950 text-white px-4 py-2.5 sticky top-0 z-50 border-b border-slate-800 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <span class="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-1 rounded-full">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Lista para Publicar • +53 55520800
+                </span>
+                <span id="editor-hint" class="hidden sm:inline text-xs text-slate-400">
+                    Vista pública activa. Pulsa "Editar Textos" si deseas ajustar algo antes de subirla.
+                </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+                <!-- Número de WhatsApp Configurado -->
+                <div class="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-xs">
+                    <i class="fab fa-whatsapp text-emerald-400"></i>
+                    <input type="text" id="whatsapp-number" value="5355520800" placeholder="WhatsApp" class="bg-transparent text-white w-28 focus:outline-none text-xs font-mono">
+                </div>
+
+                <!-- Alternar Vista Cliente / Edición -->
+                <button onclick="toggleEditMode()" id="btn-toggle-mode" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer border border-slate-700">
+                    <i class="fas fa-pen-to-square"></i> <span>Editar Textos</span>
+                </button>
+
+                <!-- Botón Publicar y Obtener Enlace -->
+                <button onclick="openPublishModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fas fa-globe"></i> Publicar en Internet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         NAVEGACIÓN PRINCIPAL
+    ====================================================================== -->
+    <nav class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Logotipo -->
+            <a href="#" class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-brand-accent text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                    <i class="fas fa-compass"></i>
+                </div>
+                <div>
+                    <span contenteditable="false" id="brand-name" class="font-display font-extrabold text-lg tracking-tight text-brand-primary block leading-none">ATENAS</span>
+                    <span contenteditable="false" class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Diseñamos ideas que comunican</span>
+                </div>
+            </a>
+
+            <!-- Enlaces Desktop -->
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+                <a href="#servicios" class="hover:text-slate-950 transition">Servicios</a>
+                <a href="#proceso" class="hover:text-slate-950 transition">Cómo Trabajamos</a>
+                <a href="#clientes" class="hover:text-slate-950 transition">Clientes</a>
+                <a href="#faq" class="hover:text-slate-950 transition">Preguntas</a>
+            </div>
+
+            <!-- CTA Rápido Navbar -->
+            <div class="flex items-center gap-2">
+                <a href="tel:+5355520800" class="hidden sm:flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition">
+                    <i class="fas fa-phone text-brand-accent"></i> +53 55520800
+                </a>
+                <button onclick="openWhatsApp('Hola ATENAS, me gustaría solicitar una cotización de sus servicios.')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl shadow-sm transition cursor-pointer flex items-center gap-2">
+                    <i class="fab fa-whatsapp text-base"></i>
+                    <span>WhatsApp</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- =====================================================================
+         HERO SECTION (PORTADA DE ALTO IMPACTO)
+    ====================================================================== -->
+    <section class="relative overflow-hidden pt-12 pb-20 sm:pt-16 sm:pb-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                
+                <!-- Columna Texto -->
+                <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 bg-white border border-slate-200 px-3.5 py-1.5 rounded-full shadow-2xs">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span contenteditable="false" class="text-xs font-semibold text-slate-700">Operaciones Puerto del Mariel y Estudio Creativo • Cobertura Nacional</span>
+                    </div>
+
+                    <h1 contenteditable="false" class="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-brand-primary tracking-tight leading-[1.12]">
+                        ATENAS: <span class="text-brand-accent">Diseñamos ideas que comunican</span> y movemos tu carga.
+                    </h1>
+
+                    <p contenteditable="false" class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                        Soluciones integrales para empresas y emprendedores: extracción segura de contenedores desde el Puerto del Mariel hacia cualquier provincia del país, junto a servicios profesionales de diseño gráfico e identidad corporativa.
+                    </p>
+
+                    <!-- Botones de Acción -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+                        <button onclick="openWhatsApp('Hola ATENAS, me gustaría solicitar información sobre sus servicios de transporte de contenedores o diseño gráfico.')" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2.5 transition cursor-pointer text-sm sm:text-base">
+                            <i class="fab fa-whatsapp text-xl"></i>
+                            <span contenteditable="false">WhatsApp: +53 55520800</span>
+                        </button>
+
+                        <a href="#servicios" class="w-full sm:w-auto bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-semibold px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 transition text-sm sm:text-base">
+                            <span contenteditable="false">Ver Catálogo de Servicios</span>
+                            <i class="fas fa-arrow-down text-xs"></i>
+                        </a>
+                    </div>
+
+                    <!-- Prueba Social Rápida -->
+                    <div class="pt-6 border-t border-slate-200/80 grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0">
+                        <div>
+                            <span contenteditable="false" class="font-display font-extrabold text-2xl text-brand-primary block">100%</span>
+                            <span contenteditable="false" class="text-xs text-slate-500">Cobertura Nacional</span>
+                        </div>
+                        <div>
+                            <span contenteditable="false" class="font-display font-extrabold text-2xl text-brand-accent block">Mariel</span>
+                            <span contenteditable="false" class="text-xs text-slate-500">Extracción Directa</span>
+                        </div>
+                        <div>
+                            <span contenteditable="false" class="font-display font-extrabold text-2xl text-brand-primary block">2 en 1</span>
+                            <span contenteditable="false" class="text-xs text-slate-500">Logística + Diseño</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Tarjeta Destacada / Perfil Profesional -->
+                <div class="lg:col-span-5">
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xl relative">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-16 h-16 rounded-2xl bg-brand-primary text-white flex items-center justify-center text-2xl font-bold shrink-0 shadow-md">
+                                <i class="fas fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-brand-accent block">Atención Directa</span>
+                                <h2 contenteditable="false" class="font-display font-bold text-xl text-slate-900">ATENAS</h2>
+                                <p contenteditable="false" class="text-xs text-slate-500 italic">“Diseñamos ideas que comunican.”</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
+                            <div class="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
+                                <i class="fas fa-truck-moving text-brand-accent"></i>
+                                <span contenteditable="false">Extracción de contenedores desde Puerto del Mariel a todo el país</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
+                                <i class="fas fa-swatchbook text-brand-accent"></i>
+                                <span contenteditable="false">Manuales de identidad visual y branding corporativo</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
+                                <i class="fas fa-id-card text-brand-accent"></i>
+                                <span contenteditable="false">Folletos comerciales y tarjetas de presentación listos para imprenta</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs sm:text-sm font-bold text-slate-900 pt-1 border-t border-slate-200/70">
+                                <i class="fas fa-phone-volume text-emerald-600"></i>
+                                <span contenteditable="false">Móvil / WhatsApp: +53 55520800</span>
+                            </div>
+                        </div>
+
+                        <button onclick="openQuoteModal('Cotización ATENAS (Logística / Diseño)')" class="w-full bg-brand-accent hover:opacity-95 text-white font-bold py-3.5 px-5 rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2 text-sm">
+                            <i class="fas fa-paper-plane"></i>
+                            <span contenteditable="false">Solicitar Presupuesto Inmediato</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         SECCIÓN DE SERVICIOS Y PAQUETES
+    ====================================================================== -->
+    <section id="servicios" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+                <div class="max-w-2xl">
+                    <span contenteditable="false" class="text-xs font-bold uppercase tracking-widest text-brand-accent">Nuestras Divisiones de Servicio</span>
+                    <h2 contenteditable="false" class="font-display text-3xl sm:text-4xl font-extrabold text-brand-primary mt-1">
+                        Logística portuaria y comunicación visual de alto nivel
+                    </h2>
+                </div>
+                <button onclick="addNewService()" class="edit-only bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 cursor-pointer self-start md:self-auto">
+                    <i class="fas fa-plus"></i> Añadir Nuevo Servicio
+                </button>
+            </div>
+
+            <!-- Contenedor de Tarjetas de Servicio -->
+            <div id="services-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Servicio 1: Extracción de Contenedores Puerto Mariel -->
+                <div class="service-card bg-brand-primary text-white rounded-2xl p-6 flex flex-col justify-between shadow-2xl relative ring-2 ring-blue-500">
+                    <span class="absolute -top-3 left-6 bg-brand-accent text-white text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full shadow">
+                        Logística Nacional
+                    </span>
+                    <button onclick="removeCard(this)" class="edit-only absolute top-4 right-4 text-slate-400 hover:text-rose-400 p-1.5 rounded-lg bg-slate-800 cursor-pointer" title="Eliminar servicio">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-white/10 text-emerald-400 flex items-center justify-center text-xl mb-5">
+                            <i class="fas fa-ship"></i>
+                        </div>
+                        <span contenteditable="false" class="text-[11px] font-bold uppercase tracking-wider text-blue-300">Transporte Especializado</span>
+                        <h3 contenteditable="false" class="service-title font-display font-bold text-lg text-white mt-1 mb-3">
+                            Extracción de Contenedores — Puerto Mariel
+                        </h3>
+                        <p contenteditable="false" class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-5">
+                            Traslado seguro, puntual y coordinado de contenedores desde la terminal del Puerto del Mariel hasta cualquier provincia o destino del país.
+                        </p>
+                        <ul class="space-y-2 text-xs text-slate-300 mb-6 border-t border-slate-800 pt-4">
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-400"></i> <span contenteditable="false">Cobertura a todas las provincias</span></li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-400"></i> <span contenteditable="false">Contenedores de 20' y 40' pies</span></li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-400"></i> <span contenteditable="false">Seguimiento directo durante la ruta</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-800 flex items-center justify-between gap-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block uppercase">Tarifa</span>
+                            <span contenteditable="false" class="font-display font-extrabold text-base text-white">Según Destino</span>
+                        </div>
+                        <button onclick="requestService(this)" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 py-2.5 rounded-xl transition cursor-pointer">
+                            Cotizar Ruta
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Servicio 2: Manual de Identidad Visual -->
+                <div class="service-card bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:shadow-xl hover:border-blue-300 transition relative group">
+                    <button onclick="removeCard(this)" class="edit-only absolute top-4 right-4 text-slate-400 hover:text-rose-600 p-1.5 rounded-lg bg-slate-100 cursor-pointer" title="Eliminar servicio">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-brand-accent flex items-center justify-center text-xl mb-5">
+                            <i class="fas fa-swatchbook"></i>
+                        </div>
+                        <span contenteditable="false" class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Branding Corporativo</span>
+                        <h3 contenteditable="false" class="service-title font-display font-bold text-lg text-slate-900 mt-1 mb-3">
+                            Manual de Identidad Visual
+                        </h3>
+                        <p contenteditable="false" class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5">
+                            Construimos la imagen completa de tu marca: logotipo vectorizado, paleta cromática, tipografías, normas de uso y aplicaciones en uniformes y papelería.
+                        </p>
+                        <ul class="space-y-2 text-xs text-slate-600 mb-6 border-t border-slate-100 pt-4">
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500"></i> <span contenteditable="false">Logotipo en vectores (.SVG, .AI, .PDF)</span></li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500"></i> <span contenteditable="false">Guía de colores y tipografías</span></li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500"></i> <span contenteditable="false">Mockups en ropa y promocionales</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block uppercase">Paquete</span>
+                            <span contenteditable="false" class="font-display font-extrabold text-base text-brand-primary">A Medida</span>
+                        </div>
+                        <button onclick="requestService(this)" class="bg-slate-900 hover:bg-brand-accent text-white text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer">
+                            Solicitar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Servicio 3: Diseño de Folletos Comerciales -->
+                <div class="service-card bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:shadow-xl hover:border-blue-300 transition relative group">
+                    <button onclick="removeCard(this)" class="edit-only absolute top-4 right-4 text-slate-400 hover:text-rose-600 p-1.5 rounded-lg bg-slate-100 cursor-pointer" title="Eliminar servicio">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl mb-5">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <span contenteditable="false" class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Publicidad Impresa y Digital</span>
+                        <h3 contenteditable="false" class="service-title font-display font-bold text-lg text-slate-900 mt-1 mb-3">
+                            Diseño de Folletos Comerciales
+                        </h3>
+                        <p contenteditable="false" class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5">
+                            Dípticos, trípticos plegables y catálogos comerciales de alto impacto visual diseñados para presentar tus productos y cerrar ventas con profesionalismo.
+                        </p>
+                        <ul class="space-y-2 text-xs text-slate-600 mb-6 border-t border-slate-100 pt-4">
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500"></i> <span contenteditable="false">Trípticos y plegables de 3 caras</span></li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500"></i> <span contenteditable="false">Redacción comercial persuasiva</span></li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500"></i> <span contenteditable="false">Archivo listo para imprenta y PDF web</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block uppercase">Entrega</span>
+                            <span contenteditable="false" class="font-display font-extrabold text-base text-brand-primary">Rápida</span>
+                        </div>
+                        <button onclick="requestService(this)" class="bg-slate-900 hover:bg-brand-accent text-white text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer">
+                            Solicitar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Servicio 4: Tarjetas de Presentación -->
+                <div class="service-card bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:shadow-xl hover:border-blue-300 transition relative group">
+                    <button onclick="removeCard(this)" class="edit-only absolute top-4 right-4 text-slate-400 hover:text-rose-600 p-1.5 rounded-lg bg-slate-100 cursor-pointer" title="Eliminar servicio">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-5">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <span contenteditable="false" class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Imagen Ejecutiva</span>
+                        <h3 contenteditable="false" class="service-title font-display font-bold text-lg text-slate-900 mt-1 mb-3">
+                            Tarjetas de Presentación
+                        </h3>
+                        <p contenteditable="false" class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5">
+                            Tarjetas corporativas elegantes a doble cara con código QR vCard, acabados modernos y medidas exactas con guías de corte para impresión perfecta.
+                        </p>
+                        <ul class="space-y-2 text-xs text-slate-600 mb-6 border-t border-slate-100 pt-4">
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500"></i> <span contenteditable="false">Diseño anverso y reverso</span></li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500"></i> <span contenteditable="false">Integración de código QR de contacto</span></li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-500"></i> <span contenteditable="false">Formato editable y listo para imprimir</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block uppercase">Formato</span>
+                            <span contenteditable="false" class="font-display font-extrabold text-base text-brand-primary">85 × 55 mm</span>
+                        </div>
+                        <button onclick="requestService(this)" class="bg-slate-900 hover:bg-brand-accent text-white text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer">
+                            Solicitar
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         CÓMO TRABAJAMOS (3 PASOS CLAROS)
+    ====================================================================== -->
+    <section id="proceso" class="py-20 bg-slate-50 border-y border-slate-200/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-14">
+                <span class="text-xs font-bold uppercase tracking-widest text-brand-accent">Metodología ATENAS</span>
+                <h2 contenteditable="false" class="font-display text-3xl font-extrabold text-brand-primary mt-1">
+                    Proceso ágil y directo
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-7 rounded-2xl border border-slate-200/80 shadow-2xs">
+                    <div class="w-10 h-10 rounded-full bg-brand-primary text-white font-display font-bold flex items-center justify-center mb-4">1</div>
+                    <h3 contenteditable="false" class="font-display font-bold text-lg text-slate-900 mb-2">Contacto Directo</h3>
+                    <p contenteditable="false" class="text-sm text-slate-600 leading-relaxed">
+                        Escríbenos al <strong>+53 55520800</strong> indicándonos el destino de tu contenedor desde Mariel o el proyecto gráfico que deseas realizar.
+                    </p>
+                </div>
+
+                <div class="bg-white p-7 rounded-2xl border border-slate-200/80 shadow-2xs">
+                    <div class="w-10 h-10 rounded-full bg-brand-accent text-white font-display font-bold flex items-center justify-center mb-4">2</div>
+                    <h3 contenteditable="false" class="font-display font-bold text-lg text-slate-900 mb-2">Planificación y Diseño</h3>
+                    <p contenteditable="false" class="text-sm text-slate-600 leading-relaxed">
+                        Coordinamos la extracción portuaria puntual o desarrollamos las propuestas visuales de tu marca con revisiones personalizadas.
+                    </p>
+                </div>
+
+                <div class="bg-white p-7 rounded-2xl border border-slate-200/80 shadow-2xs">
+                    <div class="w-10 h-10 rounded-full bg-emerald-600 text-white font-display font-bold flex items-center justify-center mb-4">3</div>
+                    <h3 contenteditable="false" class="font-display font-bold text-lg text-slate-900 mb-2">Entrega Garantizada</h3>
+                    <p contenteditable="false" class="text-sm text-slate-600 leading-relaxed">
+                        Tu carga llega segura a cualquier punto del país y tus archivos de diseño se entregan listos para imprenta y redes digitales.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         TESTIMONIOS DE CLIENTES
+    ====================================================================== -->
+    <section id="clientes" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-12">
+                <span class="text-xs font-bold uppercase tracking-widest text-brand-accent">Experiencias Reales</span>
+                <h2 contenteditable="false" class="font-display text-3xl font-extrabold text-brand-primary mt-1">
+                    Empresas que confían en ATENAS
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-50 p-6 sm:p-8 rounded-2xl border border-slate-200/80">
+                    <div class="flex text-amber-400 text-sm mb-3">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p contenteditable="false" class="text-slate-700 text-sm sm:text-base italic leading-relaxed mb-5">
+                        "Coordinamos con ATENAS la extracción de nuestros contenedores desde el Puerto del Mariel hacia el oriente del país y el cumplimiento fue impecable. Además diseñaron toda nuestra papelería comercial."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center font-bold text-slate-700 text-sm">CM</div>
+                        <div>
+                            <h4 contenteditable="false" class="font-bold text-sm text-slate-900">Carlos Morales</h4>
+                            <span contenteditable="false" class="text-xs text-slate-500">Director de Operaciones y Suministros</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-6 sm:p-8 rounded-2xl border border-slate-200/80">
+                    <div class="flex text-amber-400 text-sm mb-3">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p contenteditable="false" class="text-slate-700 text-sm sm:text-base italic leading-relaxed mb-5">
+                        "Fieles a su lema: diseñan ideas que comunican. Nos entregaron el manual de identidad visual, los trípticos plegables y las tarjetas de presentación listos para imprenta en tiempo récord."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center font-bold text-slate-700 text-sm">LV</div>
+                        <div>
+                            <h4 contenteditable="false" class="font-bold text-sm text-slate-900">Laura Valdés</h4>
+                            <span contenteditable="false" class="text-xs text-slate-500">Gerente Comercial</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         PREGUNTAS FRECUENTES (FAQ)
+    ====================================================================== -->
+    <section id="faq" class="py-16 bg-slate-50 border-t border-slate-200/80">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6">
+            <h2 contenteditable="false" class="font-display text-2xl sm:text-3xl font-extrabold text-brand-primary text-center mb-8">
+                Preguntas Frecuentes
+            </h2>
+
+            <div class="space-y-3">
+                <details class="bg-white border border-slate-200 rounded-xl p-4 group" open>
+                    <summary class="font-bold text-sm text-slate-900 cursor-pointer flex justify-between items-center list-none">
+                        <span contenteditable="false">¿Hacia qué destinos realizan la extracción de contenedores desde el Puerto del Mariel?</span>
+                        <i class="fas fa-chevron-down text-xs text-slate-400 group-open:rotate-180 transition"></i>
+                    </summary>
+                    <p contenteditable="false" class="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed">
+                        Realizamos traslados desde la terminal del Puerto del Mariel hacia La Habana y hacia cualquier provincia o municipio del país, adaptándonos a los horarios de despacho y requerimientos de su carga.
+                    </p>
+                </details>
+
+                <details class="bg-white border border-slate-200 rounded-xl p-4 group">
+                    <summary class="font-bold text-sm text-slate-900 cursor-pointer flex justify-between items-center list-none">
+                        <span contenteditable="false">¿En qué formatos entregan los folletos, tarjetas y manuales de identidad?</span>
+                        <i class="fas fa-chevron-down text-xs text-slate-400 group-open:rotate-180 transition"></i>
+                    </summary>
+                    <p contenteditable="false" class="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed">
+                        Todos los proyectos gráficos se entregan en archivos editables y vectoriales de alta resolución (PDF listo para imprenta con marcas de corte, SVG/AI y PNG transparente para redes sociales).
+                    </p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         BANNER DE CIERRE (CTA FINAL) Y FOOTER
+    ====================================================================== -->
+    <section class="bg-brand-primary text-white py-16">
+        <div class="max-w-4xl mx-auto px-4 text-center space-y-6">
+            <span class="text-xs font-bold uppercase tracking-widest text-emerald-400">ATENAS • Logística & Diseño</span>
+            <h2 contenteditable="false" class="font-display text-3xl sm:text-4xl font-extrabold">
+                Diseñamos ideas que comunican y trasladamos tu carga con seguridad.
+            </h2>
+            <p contenteditable="false" class="text-slate-300 text-sm sm:text-base max-w-xl mx-auto">
+                Contáctanos hoy al <strong>+53 55520800</strong> para coordinar tu extracción desde el Puerto del Mariel o iniciar la imagen corporativa de tu empresa.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 pt-2">
+                <button onclick="openWhatsApp('Hola ATENAS, vengo de su web y deseo solicitar una cotización.')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold px-6 py-3.5 rounded-xl flex items-center gap-2 transition cursor-pointer">
+                    <i class="fab fa-whatsapp text-lg"></i> WhatsApp: +53 55520800
+                </button>
+                <a href="tel:+5355520800" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold px-6 py-3.5 rounded-xl transition flex items-center gap-2">
+                    <i class="fas fa-phone"></i> Llamar Ahora
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-slate-950 text-slate-400 py-8 border-t border-slate-900 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p contenteditable="false">© 2026 ATENAS — Diseñamos ideas que comunican. Todos los derechos reservados.</p>
+            <div class="flex items-center gap-5">
+                <span contenteditable="false"><i class="fas fa-phone mr-1.5 text-emerald-400"></i>+53 55520800</span>
+                <span contenteditable="false"><i class="fas fa-location-dot mr-1.5 text-slate-500"></i>Puerto del Mariel • Servicio en toda Cuba</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- BOTÓN FLOTANTE DE WHATSAPP -->
+    <button onclick="openWhatsApp('Hola ATENAS, me gustaría consultar sus servicios de contenedores desde Mariel o diseño gráfico.')" class="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white shadow-2xl flex items-center justify-center text-2xl transition hover:scale-105 cursor-pointer" title="Contactar a ATENAS por WhatsApp (+53 55520800)">
+        <i class="fab fa-whatsapp"></i>
+    </button>
+
+    <!-- MODAL DE COTIZACIÓN RÁPIDA -->
+    <div id="quote-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-service-title" class="font-display font-bold text-lg text-slate-900">Solicitar Servicio</h3>
+                <button onclick="closeQuoteModal()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="submitQuoteForm(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tu Nombre o Empresa</label>
+                    <input type="text" id="client-name" required placeholder="Ej. Empresa / Nombre" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Detalles (Provincia destino o servicio de diseño)</label>
+                    <textarea id="client-notes" rows="3" placeholder="Ej. Contenedor de 40' desde Mariel hacia Villa Clara / Diseño de folleto comercial..." class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm focus:border-blue-500 focus:outline-none"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer text-sm">
+                    <i class="fab fa-whatsapp text-lg"></i> Enviar a ATENAS (+53 55520800)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PARA PUBLICAR EN INTERNET Y OBTENER ENLACE -->
+    <div id="publish-modal" class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-base text-slate-900">Publicar Vitrina ATENAS en Internet</h3>
+                        <p class="text-xs text-slate-500">Obtén un enlace web público listo para compartir en Facebook y WhatsApp</p>
+                    </div>
+                </div>
+                <button onclick="closePublishModal()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-600">
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-start gap-3">
+                    <span class="w-6 h-6 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center shrink-0">1</span>
+                    <div>
+                        <strong class="text-slate-900 block mb-0.5">Descarga tu archivo web limpio (index.html)</strong>
+                        <span>Este botón genera la versión final sin la barra de edición y con tu móvil <strong>+53 55520800</strong> integrado.</span>
+                        <button onclick="downloadCleanHTML()" class="mt-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-lg shadow flex items-center gap-2 transition cursor-pointer">
+                            <i class="fas fa-download"></i> Descargar index.html Listo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-start gap-3">
+                    <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center shrink-0">2</span>
+                    <div>
+                        <strong class="text-slate-900 block mb-0.5">Súbelo gratis para generar tu enlace público</strong>
+                        <span>Arrastra el archivo <strong>index.html</strong> descargado en cualquiera de estas plataformas gratuitas (no requieren tarjeta):</span>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <a href="https://app.netlify.com/drop" target="_blank" rel="noopener" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5">
+                                <i class="fas fa-cloud-upload-alt text-emerald-400"></i> Netlify Drop (Enlace en 10 seg)
+                            </a>
+                            <a href="https://tiiny.host" target="_blank" rel="noopener" class="bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-semibold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5">
+                                <i class="fas fa-link text-blue-600"></i> Tiiny.host
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isEditing = false;
+
+        // Alternar entre Vista Pública y Modo Edición
+        function toggleEditMode() {
+            isEditing = !isEditing;
+            const body = document.body;
+            const btn = document.getElementById('btn-toggle-mode');
+            const editables = document.querySelectorAll('[contenteditable]');
+
+            if (isEditing) {
+                body.classList.add('is-editing');
+                btn.innerHTML = '<i class="fas fa-eye"></i> <span>Vista Pública</span>';
+                btn.classList.replace('bg-slate-800', 'bg-emerald-600');
+                editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+            } else {
+                body.classList.remove('is-editing');
+                btn.innerHTML = '<i class="fas fa-pen-to-square"></i> <span>Editar Textos</span>';
+                btn.classList.replace('bg-emerald-600', 'bg-slate-800');
+                editables.forEach(el => el.setAttribute('contenteditable', 'false'));
+            }
+        }
+
+        // Abrir WhatsApp directamente con el número configurado (+53 55520800)
+        function openWhatsApp(message) {
+            const rawPhone = document.getElementById('whatsapp-number')?.value || '5355520800';
+            const cleanPhone = rawPhone.replace(/\D/g, '') || '5355520800';
+            const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
+        // Modal de cotización
+        let selectedService = '';
+        function requestService(btnEl) {
+            const card = btnEl.closest('.service-card');
+            const title = card.querySelector('.service-title').innerText.trim();
+            openQuoteModal(title);
+        }
+
+        function openQuoteModal(serviceName) {
+            selectedService = serviceName;
+            document.getElementById('modal-service-title').textContent = `Cotizar: ${serviceName}`;
+            const modal = document.getElementById('quote-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeQuoteModal() {
+            const modal = document.getElementById('quote-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function submitQuoteForm(e) {
+            e.preventDefault();
+            const name = document.getElementById('client-name').value.trim();
+            const notes = document.getElementById('client-notes').value.trim();
+            const msg = `Hola ATENAS, soy *${name}*. Me interesa solicitar: *${selectedService}*. ${notes ? 'Detalles: ' + notes : ''}`;
+            closeQuoteModal();
+            openWhatsApp(msg);
+        }
+
+        // Modal de Publicación y Exportación Limpia
+        function openPublishModal() {
+            const modal = document.getElementById('publish-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closePublishModal() {
+            const modal = document.getElementById('publish-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Descargar archivo HTML final limpio (sin barra de edición) listo para subir a hosting
+        function downloadCleanHTML() {
+            const currentPhone = (document.getElementById('whatsapp-number')?.value || '5355520800').replace(/\D/g, '');
+            const cloneDoc = document.documentElement.cloneNode(true);
+            
+            // Eliminar barra de administración y modales de edición en la copia pública
+            const toolbar = cloneDoc.querySelector('#admin-toolbar');
+            if (toolbar) toolbar.remove();
+            const pubModal = cloneDoc.querySelector('#publish-modal');
+            if (pubModal) pubModal.remove();
+            cloneDoc.querySelectorAll('.edit-only').forEach(el => el.remove());
+            cloneDoc.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+            cloneDoc.body.classList.remove('is-editing');
+
+            // Asegurar que el número de WhatsApp quede fijo en el script exportado
+            let htmlContent = '<!DOCTYPE html>\n' + cloneDoc.outerHTML;
+            htmlContent = htmlContent.replace(/document\.getElementById\('whatsapp-number'\)\?\.value \|\| '5355520800'/g, `'${currentPhone}'`);
+
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Añadir / Eliminar tarjetas de servicio en modo edición
+        function addNewService() {
+            const grid = document.getElementById('services-grid');
+            const newCard = document.createElement('div');
+            newCard.className = 'service-card bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:shadow-xl hover:border-blue-300 transition relative group';
+            newCard.innerHTML = `
+                <button onclick="removeCard(this)" class="edit-only absolute top-4 right-4 text-slate-400 hover:text-rose-600 p-1.5 rounded-lg bg-slate-100 cursor-pointer" title="Eliminar servicio">
+                    <i class="fas fa-trash-alt text-xs"></i>
+                </button>
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-brand-accent flex items-center justify-center text-xl mb-5">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <span contenteditable="true" class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nuevo Servicio</span>
+                    <h3 contenteditable="true" class="service-title font-display font-bold text-lg text-slate-900 mt-1 mb-3">Nombre del Servicio</h3>
+                    <p contenteditable="true" class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5">Descripción breve del servicio ofrecido por ATENAS.</p>
+                </div>
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                    <div>
+                        <span class="text-[10px] text-slate-400 block uppercase">Tarifa</span>
+                        <span contenteditable="true" class="font-display font-extrabold text-base text-brand-primary">Consultar</span>
+                    </div>
+                    <button onclick="requestService(this)" class="bg-slate-900 hover:bg-brand-accent text-white text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer">Solicitar</button>
+                </div>
+            `;
+            grid.appendChild(newCard);
+        }
+
+        function removeCard(btnEl) {
+            const cards = document.querySelectorAll('.service-card');
+            if (cards.length > 1) {
+                btnEl.closest('.service-card').remove();
+            }
+        }
+    </script>
+</body>
+</html>
